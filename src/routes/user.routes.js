@@ -1,7 +1,10 @@
 import { Router } from 'express';
-import { registerUser } from '../controllers/user.controller.js'; 
+import { loginUser,logoutUser,registerUser } from '../controllers/user.controller.js'; 
 import { upload } from '../middlewares/multer.middleware.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+
+
 
 const router = Router();
 console.log('Is registerUser defined in routes:', typeof registerUser);
@@ -34,6 +37,9 @@ router.route('/register').post(
             return res.status(500).json({ message: "Internal server error" });
         }
     });
+
+    router.route("/login").post(loginUser)
+    router.route("/logout").post(verifyJWT,  logoutUser)
     
 
 export default router;

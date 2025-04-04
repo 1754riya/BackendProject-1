@@ -7,10 +7,10 @@ import {app} from './app.js'
 dotenv.config({
     path: './.env'
 });
-app.use(express.json()); // Parse JSON payload
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded payloads
-app.use(cookieParser()); // Enable parsing of cookies
-app.use(cors()); // Enable CORS for frontend access
+// app.use(express.json()); // Parse JSON payload
+// app.use(express.urlencoded({ extended: true })); // Parse URL-encoded payloads
+// app.use(cookieParser()); // Enable parsing of cookies
+// app.use(cors()); // Enable CORS for frontend access
 
 
 

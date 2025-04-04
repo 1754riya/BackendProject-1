@@ -120,6 +120,8 @@ if(!username && !email){
 const user = await User.findOne({
     $or:[{username},{email}]
 })
+console.log("User Found:", user);
+
 if(!user){
     throw new ApiError(404,"user does not exist")
 }
@@ -181,7 +183,7 @@ const logoutUser = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, {}, "User logged Out"))
 })
 
-
+  
   
 
 

@@ -64,7 +64,7 @@ const registerUser = asyncHandler( async (req, res) => {
   }
   console.log("Avatar Path:", avatarLocalPath);
   console.log("Cover Image Path:", coverImageLocalPath);
-  
+
 
   if (!avatarLocalPath) {
       throw new ApiError(400, "Avatar file is required");
@@ -78,13 +78,13 @@ const registerUser = asyncHandler( async (req, res) => {
   if (!avatar) {
       throw new ApiError(400, "Avatar file is required")
   }
- 
+
 
   const user = await User.create({
       fullName,
       avatar: avatar.url,
       coverImage: coverImage?.url || "",
-      email, 
+      email,
       password,
       username: username.toLowerCase()
   })
@@ -111,7 +111,7 @@ const loginUser = asyncHandler(async(req,res)=>{
 // find the user
 // password check
 // access and refresh token
-// send cookies 
+// send cookies
 const {email,username,password} =  req.body;
 console.log("Received Login Request:", req.body);
 if(!username && !email){
@@ -123,22 +123,23 @@ const user = await User.findOne({
 if(!user){
     throw new ApiError(404,"user does not exist")
 }
-const isPasswordValid= user.isPasswordCorrect (password)
+    const isPasswordValid = user.isPasswordCorrect(password);
+    console.log("Is Password Valid:", isPasswordValid);
 if (!isPasswordValid) {
     throw new ApiError(401, "Invalid user credentials")
     }
 
-   const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    console.log("Generated Access Token:", accessToken);
+    console.log("Generated Refresh Token:", refreshToken);
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-    console.log("User Found:", loggedInUser);
-    console.log("Access Token:", accessToken);
-    console.log("Refresh Token:", refreshToken);
+    console.log("User logged in is:", loggedInUser);
 
     const options = {
         httpOnly: true,
         secure: false
-        
+
     }
     return res
     .status(200)
@@ -146,7 +147,7 @@ if (!isPasswordValid) {
     .cookie("refreshToken", refreshToken, options)
     .json(
         new ApiResponse(
-            200, 
+            200,
             {
                 user: loggedInUser, accessToken, refreshToken
             },
@@ -182,8 +183,7 @@ const logoutUser = asyncHandler(async(req, res) => {
 })
 
 
-  
 
 
-export { registerUser,loginUser,logoutUser }; 
- 
+
+export { registerUser,loginUser,logoutUser };

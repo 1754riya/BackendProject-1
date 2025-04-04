@@ -23,16 +23,6 @@ const generateAccessAndRefreshTokens = async(userId)=>{
     }
 }
 const registerUser = asyncHandler( async (req, res) => {
-  // get user details from frontend
-  // validation - not empty
-  // check if user already exists: username, email
-  // check for images, check for avatar
-  // upload them to cloudinary, avatar
-  // create user object - create entry in db
-  // remove password and refresh token field from response
-  // check for user creation
-  // return res
-
 
   const {fullName, email, username, password } = req.body;
   //console.log("email: ", email);
@@ -106,12 +96,15 @@ const registerUser = asyncHandler( async (req, res) => {
 console.log('Is registerUser defined in controller:', typeof registerUser);
 
 const loginUser = asyncHandler(async(req,res)=>{
+<<<<<<< HEAD
 // req body ->data
 // username or email
 // find the user
 // password check
 // access and refresh token
 // send cookies
+=======
+>>>>>>> 4b3ac04b96577f4cd13f1234b69fd84e22d8dc81
 const {email,username,password} =  req.body;
 console.log("Received Login Request:", req.body);
 if(!username && !email){
@@ -120,11 +113,17 @@ if(!username && !email){
 const user = await User.findOne({
     $or:[{username},{email}]
 })
+console.log("User Found:", user);
+
 if(!user){
     throw new ApiError(404,"user does not exist")
 }
+<<<<<<< HEAD
     const isPasswordValid = user.isPasswordCorrect(password);
     console.log("Is Password Valid:", isPasswordValid);
+=======
+const isPasswordValid= await user.isPasswordCorrect (password)
+>>>>>>> 4b3ac04b96577f4cd13f1234b69fd84e22d8dc81
 if (!isPasswordValid) {
     throw new ApiError(401, "Invalid user credentials")
     }
@@ -162,7 +161,7 @@ const logoutUser = asyncHandler(async(req, res) => {
         req.user._id,
         {
             $unset: {
-                refreshToken: 1 // this removes the field from document
+                refreshToken: 1 
             }
         },
         {
@@ -182,7 +181,12 @@ const logoutUser = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, {}, "User logged Out"))
 })
 
+<<<<<<< HEAD
 
+=======
+  
+  
+>>>>>>> 4b3ac04b96577f4cd13f1234b69fd84e22d8dc81
 
 
 

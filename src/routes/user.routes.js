@@ -3,6 +3,9 @@ import { loginUser,logoutUser,registerUser } from '../controllers/user.controlle
 import { upload } from '../middlewares/multer.middleware.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { refreshAccessToken } from '../controllers/user.controller.js';
+
+
 const router = Router();
 console.log('Is registerUser defined in routes:', typeof registerUser);
 
@@ -37,4 +40,5 @@ router.route('/register').post(
 
     router.route("/login").post(loginUser);
     router.route("/logout").post(verifyJWT,  logoutUser);
+    router.route("/refresh-token").post(refreshAccessToken)
 export default router;

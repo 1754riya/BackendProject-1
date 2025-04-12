@@ -352,7 +352,7 @@ const resendEmailVerification = asyncHandler(async (req, res, next) => {
       : "videocave.vercel.app";
 
   const mailOptions = {
-    from: "lavishgarg1199@gmail.com",
+    from: "xoxoriru67@gmail.com",
     to: user.email,
     subject: `${user.fullName}, verify your email address for VideoCave`,
     html: `

@@ -40,7 +40,7 @@ const forgotPassword = asyncHandler(async (req, res, next) => {
 
   // Email configuration
   const mailOptions = {
-    from: "lavishgarg1199@gmail.com",
+    from: "xoxoriru67@gmail.com",
     to: email,
     subject: "VideoCave | Reset password request",
     html: `
@@ -173,7 +173,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
       : "videocave.vercel.app";
 
   const mailOptions = {
-    from: "lavishgarg1199@gmail.com",
+    from: "xoxoriru67@gmail.com",
     to: createdUser.email,
     subject: `${createdUser.fullName}, verify your email address for VideoCave`,
     html: `

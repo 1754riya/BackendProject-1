@@ -1,63 +1,199 @@
-import { Router } from 'express';
-import { changeCurrentPassword,
-    getCurrentUser,
-    getUserChannelProfile,
-    getWatchHistory,
-    loginUser,
-    logoutUser,
-    registerUser,
-    updateAccountDetails,
-    updateUserAvatar,
-    updateUserCoverImage } from '../controllers/user.controller.js'; 
-import { upload } from '../middlewares/multer.middleware.js';
-import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import express from "express";
+import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { refreshAccessToken } from '../controllers/user.controller.js';
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  updateUserPassword,
+  updateAccountDetails,
+  updateUserAvatarImage,
+  updateUserCoverImage,
+  getLoggedInUser,
+  getUserChannelDetails,
+  getWatchHistory,
+  clearWatchHistory,
+  deleteVideoFromWatchHistory,
+  forgotPassword,
+  resetPassword,
+  verifyEmail,
+  resendEmailVerification,
+  checkEmailVerificationStatus,
+  finishAccountCreation,
+} from "../controllers/user.controller.js";
+import { check, checkSchema } from "express-validator";
 
+const router = express.Router();
 
-const router = Router();
-console.log('Is registerUser defined in routes:', typeof registerUser);
+router.route("/register/initial").post(
+  [
+    check("email", "Please enter a valid email address").trim().isEmail(),
+    check("fullName", "Full name must be between 3 to 50 characters long")
+      .trim()
+      .isLength({ min: 3, max: 50 })
+      .matches(/^[a-zA-Z\s]+$/)
+      .withMessage(
+        "Full name must contain only alphabetical characters and spaces"
+      ),
+    check(
+      "password",
+      "Password must contain one uppercase, one lowercase, one special character, one digit and minimum 8 characters long"
+    )
+      .trim()
+      .isStrongPassword(),
+  ],
+  registerUser
+);
 
-router.route('/register').post(
-    upload.fields([
-        {
-            name:"avatar",
-            maxCount:1
-        },
-        {
-            name:"coverImage",
-            maxCount:1
-        }
-    ]),
-    registerUser);
-    router.post("/upload-test", upload.single("avatar"), async (req, res) => {
-        try {
-            const filePath = req.file?.path;
-            console.log("File Path:", filePath);
-    
-            const result = await uploadOnCloudinary(filePath);
-            if (!result) {
-                return res.status(500).json({ message: "Cloudinary upload failed" });
+router.route("/register/complete").post(
+  verifyJWT,
+  upload.fields([
+    {
+      name: "avatar",
+      maxCount: 1,
+    },
+    {
+      name: "coverImage",
+      maxCount: 1,
+    },
+  ]),
+  [
+    // Validate userName
+    check(
+      "userName",
+      "Username should not be empty and can only contain letters, numbers, and underscores"
+    )
+      .trim()
+      .matches(/^[a-zA-Z0-9_]+$/),
+    // Validate avatar and coverImage
+    checkSchema({
+      avatar: {
+        custom: {
+          options: (_value, { req, path }) => {
+            if (req.files && req.files[path]) {
+              const file = req.files[path][0];
+              const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+              return allowedMimeTypes.includes(file.mimetype);
             }
-    
-            return res.status(200).json({ url: result.url });
-        } catch (error) {
-            console.error("Error in upload-test:", error);
-            return res.status(500).json({ message: "Internal server error" });
-        }
-    });
+            return false; // Avatar is required, so no file means validation fails
+          },
+          errorMessage:
+            "Avatar must be a valid image file (JPEG, PNG, GIF) and is required",
+        },
+      },
+      coverImage: {
+        optional: true, // This makes the field validation optional
+        custom: {
+          options: (_value, { req, path }) => {
+            if (req.files && req.files[path]) {
+              const file = req.files[path][0];
+              const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+              return allowedMimeTypes.includes(file.mimetype);
+            }
+            return true; // If no file is provided, validation passes
+          },
+          errorMessage:
+            "Cover image must be a valid image file (JPEG, PNG, GIF)",
+        },
+      },
+    }),
+  ],
+  finishAccountCreation
+);
 
-    router.route("/login").post(loginUser);
-    router.route("/logout").post(verifyJWT,  logoutUser);
-    router.route("/refresh-token").post(refreshAccessToken);
-    router.route("/change-password").post(verifyJWT,changeCurrentPassword);
-    router.route("/current-user").get(verifyJWT,getCurrentUser);
-    router.route("/update-account").patch(verifyJWT,updateAccountDetails);
-    router.route("/avatar").patch(verifyJWT,upload.single("avatar"),updateUserAvatar);
-    router.route("/cover-image").patch(verifyJWT,upload.single("coverImage"),updateUserCoverImage);
-    router.route("/c/:username").get(verifyJWT,getUserChannelProfile);
-    router.route("/history").get(verifyJWT,getWatchHistory);
+router.route("/verify-email/:token").post(verifyEmail);
+router.route("/resend-verification-email").post(resendEmailVerification);
 
+router.route("/login").post(
+  [
+    check(
+      "userName",
+      "Username should not be empty and can only contain letters, numbers, and underscores"
+    )
+      .trim()
+      .matches(/^[a-zA-Z0-9_]+$/)
+      .optional(),
+    check("email", "Please enter a valid email address").trim().isEmail(),
+    check("password", "please provide your password").trim().notEmpty(),
+  ],
+  loginUser
+);
 
+router
+  .route("/check-email-verification-status")
+  .get(verifyJWT, checkEmailVerificationStatus);
+
+router.route("/logout").post(verifyJWT, logoutUser);
+router.route("/refresh-token").post(refreshAccessToken);
+
+router.route("/forgot-password").post(forgotPassword);
+router.route("/reset-password/:token").post(resetPassword);
+
+router
+  .route("/change-password")
+  .post(
+    verifyJWT,
+    [
+      check("oldPassword", "Please provide your old password.")
+        .trim()
+        .notEmpty()
+        .isString(),
+      check("newPassword", "Please provide your new password.")
+        .trim()
+        .notEmpty()
+        .isString(),
+      check("confirmNewPassword", "Please enter your new password again")
+        .trim()
+        .notEmpty()
+        .isString(),
+    ],
+    updateUserPassword
+  );
+
+router
+  .route("/update-account")
+  .patch(
+    verifyJWT,
+    [
+      check("email", "Please enter a valid email address")
+        .trim()
+        .isEmail()
+        .optional(),
+      check(
+        "fullName",
+        "Full Name must be atleast 3 characters and atmost 50 characters"
+      )
+        .trim()
+        .isLength({ min: 3, max: 50 })
+        .optional(),
+    ],
+    updateAccountDetails
+  );
+
+router
+  .route("/avatar")
+  .patch(verifyJWT, upload.single("avatar"), updateUserAvatarImage);
+
+router
+  .route("/cover-image")
+  .patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
+
+router.route("/current-user").get(verifyJWT, getLoggedInUser);
+router.route("/c/:userName").get(
+  verifyJWT,
+  check(
+    "userName",
+    "Username should not be empty and can only contain letters, numbers, and underscore"
+  )
+    .trim()
+    .matches(/^[a-zA-Z0-9_]+$/),
+  getUserChannelDetails
+);
+router.route("/history").get(verifyJWT, getWatchHistory);
+router
+  .route("/history/clear/:videoId")
+  .patch(verifyJWT, deleteVideoFromWatchHistory);
+router.route("/history/clear-history").patch(verifyJWT, clearWatchHistory);
 
 export default router;
